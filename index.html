@@ -6,56 +6,236 @@
   <title>Gesture Recognizer</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       text-align: center;
       padding: 20px;
-      background-color: #f4f4f9;
-    }
-
-    h1 {
+      background-color: #f5f7fa;
+      margin: 0;
       color: #333;
     }
 
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      color: #4361ee;
+      margin-bottom: 30px;
+    }
+
+    .video-container {
+      position: relative;
+      width: 100%;
+      max-width: 640px;
+      margin: 0 auto 30px;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
     video, canvas {
-      margin-top: 20px;
-      border: 1px solid #ccc;
+      width: 100%;
+      display: block;
     }
 
-    #gesture-output {
-      margin-top: 20px;
-      font-size: 1.5em;
-      color: #007BFF;
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
     }
 
-    #response-output {
-      margin-top: 10px;
-      font-size: 1.2em;
-      color: green;
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 25px;
     }
 
     button {
-      margin-top: 20px;
-      padding: 10px 20px;
-      font-size: 1em;
-      background-color: #007BFF;
+      background-color: #4361ee;
       color: white;
       border: none;
+      padding: 10px 20px;
       border-radius: 5px;
       cursor: pointer;
+      font-size: 16px;
+      transition: background-color 0.2s;
     }
 
     button:hover {
-      background-color: #0056b3;
+      background-color: #3a0ca3;
+    }
+
+    button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+
+    .info-panel {
+      background-color: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+    }
+
+    .gesture-display {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 15px;
+    }
+
+    .gesture-icon {
+      font-size: 3em;
+      margin-right: 20px;
+    }
+
+    .gesture-info {
+      text-align: left;
+    }
+
+    .gesture-name {
+      font-size: 1.5em;
+      font-weight: bold;
+      color: #4361ee;
+      margin: 0;
+    }
+
+    .confidence-bar {
+      height: 8px;
+      background-color: #e9ecef;
+      border-radius: 4px;
+      margin: 10px 0;
+      overflow: hidden;
+    }
+
+    .confidence-fill {
+      height: 100%;
+      background-color: #4361ee;
+      border-radius: 4px;
+      width: 0%;
+      transition: width 0.3s;
+    }
+
+    .response {
+      font-size: 1.2em;
+      color: #3a0ca3;
+      padding: 10px;
+      background-color: #f0f2ff;
+      border-radius: 5px;
+    }
+
+    .gesture-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 15px;
+      text-align: center;
+    }
+
+    .gesture-item {
+      padding: 15px;
+      background-color: #f8f9fa;
+      border-radius: 5px;
+    }
+
+    .gesture-item-icon {
+      font-size: 2em;
+      margin-bottom: 10px;
+    }
+
+    .status {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+
+    .status-active {
+      background-color: #22c55e;
+      box-shadow: 0 0 5px #22c55e;
+    }
+
+    .status-inactive {
+      background-color: #ef4444;
+    }
+
+    @media (max-width: 600px) {
+      .controls {
+        flex-direction: column;
+      }
+      
+      button {
+        width: 100%;
+      }
     }
   </style>
 </head>
 <body>
-  <h1>Gesture Recognition</h1>
-  <video id="webcam" autoplay playsinline width="640" height="480"></video>
-  <canvas id="output-canvas" width="640" height="480"></canvas>
-  <p id="gesture-output">Gesture: <span id="gesture-name">None</span></p>
-  <p id="response-output">Response: Waiting for gesture...</p>
-  <button id="start-button">Enable Webcam</button>
+  <div class="container">
+    <h1>Simple Gesture Recognizer</h1>
+    
+    <div class="video-container">
+      <video id="webcam" autoplay playsinline></video>
+      <canvas id="output-canvas"></canvas>
+    </div>
+    
+    <div class="controls">
+      <button id="start-button">Enable Webcam</button>
+      <button id="show-gestures-button">Show Available Gestures</button>
+    </div>
+    
+    <div class="info-panel">
+      <div class="gesture-display">
+        <div class="gesture-icon" id="gesture-icon">👋</div>
+        <div class="gesture-info">
+          <p class="gesture-name">
+            <span class="status status-inactive" id="status-indicator"></span>
+            <span id="gesture-name">Waiting...</span>
+          </p>
+          <div class="confidence-bar">
+            <div class="confidence-fill" id="confidence-fill"></div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="response" id="response-output">
+        Please enable webcam to start recognizing gestures
+      </div>
+    </div>
+    
+    <div class="info-panel" id="gestures-panel" style="display: none;">
+      <h2>Available Gestures</h2>
+      <div class="gesture-list">
+        <div class="gesture-item">
+          <div class="gesture-item-icon">👍</div>
+          <p>Thumb Up</p>
+        </div>
+        <div class="gesture-item">
+          <div class="gesture-item-icon">👎</div>
+          <p>Thumb Down</p>
+        </div>
+        <div class="gesture-item">
+          <div class="gesture-item-icon">✌️</div>
+          <p>Victory</p>
+        </div>
+        <div class="gesture-item">
+          <div class="gesture-item-icon">👋</div>
+          <p>Open Palm</p>
+        </div>
+        <div class="gesture-item">
+          <div class="gesture-item-icon">✊</div>
+          <p>Closed Fist</p>
+        </div>
+        <div class="gesture-item">
+          <div class="gesture-item-icon">👌</div>
+          <p>OK Sign</p>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script type="module">
     import {
@@ -63,98 +243,251 @@
       FilesetResolver
     } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3";
 
+    // DOM Elements
     const webcamElement = document.getElementById("webcam");
     const canvasElement = document.getElementById("output-canvas");
     const canvasCtx = canvasElement.getContext("2d");
-    const gestureOutput = document.getElementById("gesture-name");
+    const gestureNameElement = document.getElementById("gesture-name");
+    const gestureIconElement = document.getElementById("gesture-icon");
+    const confidenceFill = document.getElementById("confidence-fill");
     const responseOutput = document.getElementById("response-output");
+    const statusIndicator = document.getElementById("status-indicator");
     const startButton = document.getElementById("start-button");
+    const showGesturesButton = document.getElementById("show-gestures-button");
+    const gesturesPanel = document.getElementById("gestures-panel");
 
+    // State
     let gestureRecognizer;
     let webcamRunning = false;
+    let currentStream = null;
 
-    const initGestureRecognizer = async () => {
-      const filesetResolver = await FilesetResolver.forVisionTasks(
-        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm"
-      );
-
-      gestureRecognizer = await GestureRecognizer.createFromOptions(filesetResolver, {
-        baseOptions: {
-          modelAssetPath: "https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task",
-          delegate: "GPU",
-        },
-        runningMode: "VIDEO",
-      });
-      console.log("Gesture Recognizer Initialized");
+    // Gesture Icons
+    const gestureIcons = {
+      "Thumb_Up": "👍",
+      "Thumb_Down": "👎",
+      "Victory": "✌️",
+      "Open_Palm": "👋",
+      "Closed_Fist": "✊",
+      "Pointing_Up": "👆",
+      "ILoveYou": "🤟",
+      "OK": "👌",
+      "None": "❓"
     };
 
+    // Responses for gestures
+    const responses = {
+      "Thumb_Up": "Great! I like that too!",
+      "Thumb_Down": "Oh no! Sorry to hear that.",
+      "Victory": "Peace and victory!",
+      "Open_Palm": "Hello there! Nice to see you!",
+      "Closed_Fist": "Stay strong!",
+      "Pointing_Up": "Good point!",
+      "ILoveYou": "I appreciate you too!",
+      "OK": "Perfect! Everything's OK!"
+    };
+
+    // Initialize the gesture recognizer
+    const initGestureRecognizer = async () => {
+      try {
+        const filesetResolver = await FilesetResolver.forVisionTasks(
+          "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm"
+        );
+
+        gestureRecognizer = await GestureRecognizer.createFromOptions(filesetResolver, {
+          baseOptions: {
+            modelAssetPath: "https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task",
+            delegate: "GPU",
+          },
+          runningMode: "VIDEO",
+          numHands: 1,
+        });
+        
+        startButton.disabled = false;
+        console.log("Gesture Recognizer Initialized");
+      } catch (error) {
+        console.error("Error initializing the gesture recognizer:", error);
+        responseOutput.innerText = "Failed to load model. Please refresh the page.";
+      }
+    };
+
+    // Start webcam
     const startWebcam = async () => {
       if (!gestureRecognizer) {
-        alert("Model not loaded yet. Please wait...");
+        responseOutput.innerText = "Model not loaded yet. Please wait...";
         return;
       }
 
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        webcamElement.srcObject = stream;
+        currentStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        webcamElement.srcObject = currentStream;
         webcamRunning = true;
+        
+        // Update UI
+        startButton.textContent = "Stop Webcam";
+        statusIndicator.classList.remove("status-inactive");
+        statusIndicator.classList.add("status-active");
+        responseOutput.innerText = "Waiting for gesture...";
+        
+        // Start prediction
         predictGesture();
       } catch (error) {
-        alert("Error accessing the webcam. Please ensure it's enabled.");
+        responseOutput.innerText = "Error accessing the webcam. Please ensure it's enabled.";
         console.error(error);
       }
     };
 
+    // Stop webcam
+    const stopWebcam = () => {
+      if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
+        webcamElement.srcObject = null;
+        webcamRunning = false;
+        
+        // Update UI
+        startButton.textContent = "Enable Webcam";
+        statusIndicator.classList.remove("status-active");
+        statusIndicator.classList.add("status-inactive");
+        
+        // Clear canvas
+        canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+        
+        // Reset output
+        gestureNameElement.innerText = "Waiting...";
+        gestureIconElement.innerText = "👋";
+        responseOutput.innerText = "Please enable webcam to start recognizing gestures";
+        confidenceFill.style.width = "0%";
+      }
+    };
+
+    // Toggle webcam
+    const toggleWebcam = () => {
+      if (webcamRunning) {
+        stopWebcam();
+      } else {
+        startWebcam();
+      }
+    };
+
+    // Predict gesture
     const predictGesture = async () => {
       if (!webcamRunning) return;
 
-      const nowInMs = Date.now();
-      const results = await gestureRecognizer.recognizeForVideo(webcamElement, nowInMs);
-
-      // Clear the canvas
-      canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-
-      if (results.landmarks) {
-        for (const landmarks of results.landmarks) {
-          drawLandmarks(landmarks);
+      try {
+        // Adjust canvas dimensions
+        if (webcamElement.videoWidth) {
+          canvasElement.width = webcamElement.videoWidth;
+          canvasElement.height = webcamElement.videoHeight;
         }
-      }
+        
+        const nowInMs = Date.now();
+        const results = await gestureRecognizer.recognizeForVideo(webcamElement, nowInMs);
 
-      if (results.gestures.length > 0) {
-        const recognizedGesture = results.gestures[0][0].categoryName;
-        gestureOutput.innerText = recognizedGesture;
-        provideResponse(recognizedGesture);
-      } else {
-        gestureOutput.innerText = "None";
-        responseOutput.innerText = "Waiting for gesture...";
-      }
+        // Clear the canvas
+        canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
 
-      requestAnimationFrame(predictGesture);
+        // Draw landmarks
+        if (results.landmarks) {
+          for (const landmarks of results.landmarks) {
+            drawConnectors(landmarks);
+            drawLandmarks(landmarks);
+          }
+        }
+
+        // Process recognized gestures
+        if (results.gestures.length > 0) {
+          const gesture = results.gestures[0][0];
+          const recognizedGesture = gesture.categoryName;
+          const score = gesture.score;
+          
+          gestureNameElement.innerText = recognizedGesture;
+          gestureIconElement.innerText = gestureIcons[recognizedGesture] || "❓";
+          confidenceFill.style.width = `${score * 100}%`;
+          responseOutput.innerText = responses[recognizedGesture] || "Interesting gesture!";
+        } else {
+          gestureNameElement.innerText = "No gesture detected";
+          gestureIconElement.innerText = gestureIcons["None"];
+          confidenceFill.style.width = "0%";
+          responseOutput.innerText = "Waiting for gesture...";
+        }
+
+        // Continue prediction loop
+        requestAnimationFrame(predictGesture);
+      } catch (error) {
+        console.error("Error during gesture prediction:", error);
+        
+        // Attempt to restart after error
+        setTimeout(() => {
+          if (webcamRunning) {
+            predictGesture();
+          }
+        }, 1000);
+      }
     };
 
+    // Draw hand landmarks
     const drawLandmarks = (landmarks) => {
       landmarks.forEach((point) => {
         canvasCtx.beginPath();
-        canvasCtx.arc(point.x * canvasElement.width, point.y * canvasElement.height, 5, 0, 2 * Math.PI);
-        canvasCtx.fillStyle = "#FF0000";
+        canvasCtx.arc(
+          point.x * canvasElement.width,
+          point.y * canvasElement.height, 
+          5, 0, 2 * Math.PI
+        );
+        canvasCtx.fillStyle = "rgba(255, 0, 0, 0.8)";
         canvasCtx.fill();
       });
     };
 
-    const provideResponse = (gesture) => {
-      const responses = {
-        "Thumb_Up": "Great! 👍",
-        "Thumb_Down": "Oh no! 👎",
-        "Victory": "Peace! ✌️",
-        "Open_Palm": "Hello! 👋",
-      };
-
-      responseOutput.innerText = responses[gesture] || "Unknown gesture.";
+    // Draw connectors between landmarks
+    const drawConnectors = (landmarks) => {
+      // Define hand connections
+      const connections = [
+        [0, 1], [1, 2], [2, 3], [3, 4],  // Thumb
+        [0, 5], [5, 6], [6, 7], [7, 8],  // Index finger
+        [0, 9], [9, 10], [10, 11], [11, 12],  // Middle finger
+        [0, 13], [13, 14], [14, 15], [15, 16],  // Ring finger
+        [0, 17], [17, 18], [18, 19], [19, 20],  // Pinky
+        [5, 9], [9, 13], [13, 17]  // Palm
+      ];
+      
+      canvasCtx.lineWidth = 2;
+      canvasCtx.strokeStyle = "rgba(0, 119, 255, 0.8)";
+      
+      for (const [i, j] of connections) {
+        const start = landmarks[i];
+        const end = landmarks[j];
+        
+        if (start && end) {
+          canvasCtx.beginPath();
+          canvasCtx.moveTo(
+            start.x * canvasElement.width,
+            start.y * canvasElement.height
+          );
+          canvasCtx.lineTo(
+            end.x * canvasElement.width,
+            end.y * canvasElement.height
+          );
+          canvasCtx.stroke();
+        }
+      }
     };
 
-    startButton.addEventListener("click", startWebcam);
+    // Toggle gestures panel visibility
+    const toggleGesturesPanel = () => {
+      if (gesturesPanel.style.display === "none") {
+        gesturesPanel.style.display = "block";
+        showGesturesButton.textContent = "Hide Available Gestures";
+      } else {
+        gesturesPanel.style.display = "none";
+        showGesturesButton.textContent = "Show Available Gestures";
+      }
+    };
 
-    // Initialize the gesture recognizer
+    // Event listeners
+    startButton.addEventListener("click", toggleWebcam);
+    showGesturesButton.addEventListener("click", toggleGesturesPanel);
+
+    // Initialize app
     initGestureRecognizer();
   </script>
 </body>
